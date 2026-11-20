@@ -1,0 +1,132 @@
+# Lab 04: BGP, Bank (AS 65500) e Provider (AS 64600)
+devices:
+  R1:
+    hostname: R1
+    loopback: [10.1.1.1/24]
+    interface:
+      - {name: swp1, description: to R4 (eBGP), mode: routed, address: [192.168.14.1/30]}
+      - {name: swp2, description: to R2, mode: routed, address: [10.1.102.1/29]}
+      - {name: swp3, description: to R3, mode: routed, address: [10.1.103.1/29]}
+    ospf:
+      router-id: 10.1.1.1
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp2, area: 0}
+        - {name: swp3, area: 0}
+    bgp:
+      asn: 65500
+      router-id: 10.1.1.1
+      neighbor:
+        - {address: 192.168.14.2, remote-as: 64600, description: R4, local-preference-in: 200}
+        - {address: 10.2.2.2, remote-as: 65500, update-source: lo, next-hop-self: true}
+        - {address: 10.3.3.3, remote-as: 65500, update-source: lo, next-hop-self: true}
+  R2:
+    hostname: R2
+    loopback: [10.2.2.2/24, 10.20.0.1/24, 10.20.1.1/24, 10.20.2.1/24, 10.20.3.1/24, 10.20.4.1/24, 10.20.5.1/24, 10.20.6.1/24, 10.20.7.1/24]
+    interface:
+      - {name: swp2, description: to R1, mode: routed, address: [10.1.102.2/29]}
+      - {name: swp4, description: to R3, mode: routed, address: [10.1.203.2/29]}
+    ospf:
+      router-id: 10.2.2.2
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp2, area: 0}
+        - {name: swp4, area: 0}
+    bgp:
+      asn: 65500
+      router-id: 10.2.2.2
+      network: [10.20.0.0/24, 10.20.1.0/24, 10.20.2.0/24, 10.20.3.0/24, 10.20.4.0/24, 10.20.5.0/24, 10.20.6.0/24, 10.20.7.0/24]
+      aggregate:
+        - {prefix: 10.20.0.0/21, summary-only: true}
+      neighbor:
+        - {address: 10.1.1.1, remote-as: 65500, update-source: lo}
+        - {address: 10.3.3.3, remote-as: 65500, update-source: lo}
+  R3:
+    hostname: R3
+    loopback: [10.3.3.3/24]
+    interface:
+      - {name: swp1, description: to R1, mode: routed, address: [10.1.103.3/29]}
+      - {name: swp3, description: to R4 (eBGP), mode: routed, address: [192.168.34.1/30]}
+      - {name: swp4, description: to R2, mode: routed, address: [10.1.203.3/29]}
+    ospf:
+      router-id: 10.3.3.3
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp1, area: 0}
+        - {name: swp4, area: 0}
+    bgp:
+      asn: 65500
+      router-id: 10.3.3.3
+      neighbor:
+        - {address: 192.168.34.2, remote-as: 64600, description: R4}
+        - {address: 10.1.1.1, remote-as: 65500, update-source: lo, next-hop-self: true}
+        - {address: 10.2.2.2, remote-as: 65500, update-source: lo, next-hop-self: true}
+  R4:
+    hostname: R4
+    loopback: [10.4.4.4/24]
+    interface:
+      - {name: swp1, description: to R1 (eBGP), mode: routed, address: [192.168.14.2/30]}
+      - {name: swp2, description: to R5, mode: routed, address: [10.1.45.4/29]}
+      - {name: swp3, description: to R3 (eBGP), mode: routed, address: [192.168.34.2/30]}
+      - {name: swp4, description: to R6, mode: routed, address: [10.1.46.4/29]}
+    ospf:
+      router-id: 10.4.4.4
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp2, area: 0}
+        - {name: swp4, area: 0}
+    bgp:
+      asn: 64600
+      router-id: 10.4.4.4
+      neighbor:
+        - {address: 192.168.14.1, remote-as: 65500, description: R1}
+        - {address: 192.168.34.1, remote-as: 65500, description: R3, local-preference-in: 200}
+        - {address: 10.5.5.5, remote-as: 64600, update-source: lo, next-hop-self: true}
+        - {address: 10.6.6.6, remote-as: 64600, update-source: lo, next-hop-self: true}
+  R5:
+    hostname: R5
+    loopback: [10.5.5.5/24, 172.16.0.1/22, 172.16.4.1/22, 172.16.8.1/22, 172.16.12.1/22]
+    interface:
+      - {name: swp1, description: to R6, mode: routed, address: [10.1.56.5/29]}
+      - {name: swp2, description: to R4, mode: routed, address: [10.1.45.5/29]}
+    ospf:
+      router-id: 10.5.5.5
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp1, area: 0}
+        - {name: swp2, area: 0}
+    bgp:
+      asn: 64600
+      router-id: 10.5.5.5
+      network: [172.16.0.0/22, 172.16.4.0/22, 172.16.8.0/22, 172.16.12.0/22]
+      aggregate:
+        - {prefix: 172.16.0.0/20, summary-only: true}
+      neighbor:
+        - {address: 10.4.4.4, remote-as: 64600, update-source: lo}
+        - {address: 10.6.6.6, remote-as: 64600, update-source: lo}
+  R6:
+    hostname: R6
+    loopback: [10.6.6.6/24]
+    interface:
+      - {name: swp1, description: to R5, mode: routed, address: [10.1.56.6/29]}
+      - {name: swp4, description: to R4, mode: routed, address: [10.1.46.6/29]}
+    ospf:
+      router-id: 10.6.6.6
+      area: [{id: 0}]
+      interface:
+        - {name: lo, area: 0, passive: true}
+        - {name: swp1, area: 0}
+        - {name: swp4, area: 0}
+    bgp:
+      asn: 64600
+      router-id: 10.6.6.6
+      neighbor:
+        - {address: 10.4.4.4, remote-as: 64600, update-source: lo}
+        - {address: 10.5.5.5, remote-as: 64600, update-source: lo}
+root@netauto:~/cgr# 
+
